@@ -7,7 +7,15 @@ nanti cukup edit file ini saja.
 """
 import sqlite3, os
 
-DB_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'rasanusa.db')
+import os
+
+# Cek apakah aplikasi sedang berjalan di server Vercel online
+if os.environ.get('VERCEL'):
+    # Jika di Vercel, taruh database di folder /tmp yang diizinkan untuk menulis file
+    DB_FILE = '/tmp/rasanusa.db'
+else:
+    # Jika di laptop (local), pakai jalur folder biasa kamu yang sudah ada
+    DB_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'rasanusa.db')
 
 
 def get_db():

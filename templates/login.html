@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Login – RasaNusa{% endblock %}
+
+{% block extra_head %}
+<style>
+.auth-card {
+  width: 100%; max-width: 420px;
+  border-radius: 1.5rem; overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.auth-header {
+  background: linear-gradient(135deg, #db2777, #f472b6);
+  padding: 2rem; text-align: center;
+}
+.auth-body { padding: 1.8rem; }
+.auth-label {
+  display: block; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 6px; font-size: .93rem;
+}
+.auth-input-group {
+  display: flex; align-items: center;
+  border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden;
+  background: var(--surface-2); transition: border-color .2s;
+}
+.auth-input-group:focus-within { border-color: var(--accent); }
+.auth-input-prefix {
+  padding: 0 12px; color: var(--text-muted);
+  background: var(--surface-2); font-size: 1rem;
+  display: flex; align-items: center; height: 44px; flex-shrink: 0;
+}
+.auth-input {
+  flex: 1; border: none; outline: none; padding: 10px 12px;
+  background: var(--surface-2); color: var(--text-primary);
+  font-size: .95rem; font-family: inherit;
+}
+.auth-input::placeholder { color: var(--text-muted); }
+.auth-btn {
+  width: 100%; padding: 12px; font-weight: 700; font-size: 1rem;
+  background: linear-gradient(135deg, #db2777, #f472b6);
+  color: #fff; border: none; border-radius: 10px; cursor: pointer;
+  transition: opacity .2s, transform .2s;
+}
+.auth-btn:hover { opacity: .88; transform: translateY(-1px); }
+.auth-divider { border-color: var(--border); margin: 1.2rem 0; }
+.auth-link-text { text-align: center; font-size: .9rem; color: var(--text-muted); }
+.auth-link-text a { color: var(--accent); font-weight: 700; text-decoration: none; }
+.auth-alert {
+  padding: 10px 14px; border-radius: 8px; font-size: .88rem;
+  margin-bottom: 14px; font-weight: 600;
+}
+.auth-alert.danger  { background: #fee2e2; color: #dc2626; }
+.auth-alert.success { background: #d1fae5; color: #065f46; }
+.auth-alert.info    { background: #dbeafe; color: #1d4ed8; }
+.auth-alert.warning { background: #fef3c7; color: #92400e; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container d-flex justify-content-center align-items-center" style="min-height:80vh">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div style="font-size:3rem">🍜</div>
+      <h2 style="color:#fff;font-family:'Playfair Display',serif;margin:.5rem 0 0">RasaNusa</h2>
+      <p style="color:rgba(255,255,255,.85);margin:0;font-size:.9rem">Masuk ke akunmu</p>
+    </div>
+    <div class="auth-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="auth-alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+      <form method="POST">
+        <div class="mb-3">
+          <label class="auth-label">Username</label>
+          <div class="auth-input-group">
+            <span class="auth-input-prefix"><i class="bi bi-person-fill"></i></span>
+            <input type="text" name="username" class="auth-input" placeholder="Masukkan username" required autofocus>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="auth-label">Password</label>
+          <div class="auth-input-group">
+            <span class="auth-input-prefix"><i class="bi bi-lock-fill"></i></span>
+            <input type="password" name="password" class="auth-input" placeholder="Masukkan password" required>
+          </div>
+        </div>
+        <button type="submit" class="auth-btn">
+          <i class="bi bi-box-arrow-in-right"></i> Login
+        </button>
+      </form>
+      <hr class="auth-divider">
+      <p class="auth-link-text">
+        Belum punya akun?
+        <a href="{{ url_for('auth.register') }}">Daftar sekarang</a>
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

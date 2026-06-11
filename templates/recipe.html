@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}{{ recipe.title }} – RasaNusa{% endblock %}
+
+{% block extra_head %}
+<style>
+.star-rating { display:flex; gap:6px; }
+.star-btn { background:none; border:none; font-size:2rem; color:var(--border); cursor:pointer; transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1); line-height:1; padding:0; }
+.star-btn.active, .star-btn:hover { color:#f59e0b; transform:scale(1.2); }
+.btn-export-pdf { display:inline-flex; align-items:center; gap:8px; padding:12px 28px; background:linear-gradient(135deg,var(--accent-deep),var(--accent)); color:#fff; border-radius:50px; text-decoration:none; font-weight:700; font-size:0.95rem; transition:all 0.25s ease; box-shadow:var(--shadow); }
+.btn-export-pdf:hover { opacity:0.88; transform:translateY(-2px); box-shadow:var(--shadow-hover); color:#fff; }
+
+/* Bahan disesuaikan */
+.ingredient-item { padding:5px 2px; border-bottom:1px solid var(--border); }
+.ingredient-item:last-child { border-bottom:none; }
+.ingredient-item.ing-modified {
+  background:rgba(5,150,105,.07);
+  border-left:3px solid #059669;
+  padding-left:10px;
+  border-radius:0 8px 8px 0;
+  margin:2px 0;
+}
+.ing-mod-badge {
+  display:inline-block;
+  background:#059669; color:#fff;
+  font-size:.68rem; font-weight:800;
+  padding:1px 7px; border-radius:20px;
+  margin-right:5px; vertical-align:middle;
+  letter-spacing:.3px;
+}
+.ing-note {
+  font-size:.78rem; color:#059669;
+  font-weight:600; margin-left:4px;
+}
+.ing-original {
+  font-size:.75rem; color:var(--text-muted);
+  text-decoration:line-through; margin-left:6px;
+}
+/* Tombol Atur Preferensi Rasa */
+.btn-atur-rasa {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:6px 14px; background:var(--surface);
+  color:var(--accent); border:1.5px solid var(--accent);
+  border-radius:50px; font-size:.82rem; font-weight:700;
+  text-decoration:none; transition:all .2s; white-space:nowrap;
+}
+.btn-atur-rasa:hover { background:var(--accent); color:#fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Recipe Hero ── -->
+<section class="recipe-hero page-enter">
+  <div class="container">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb" style="font-size:0.85rem">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" style="color:var(--accent-deep)">🏠 Beranda</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('main.category', cat_name=recipe.category) }}" style="color:var(--accent-deep)">{{ recipe.category | capitalize }}</a></li>
+        <li class="breadcrumb-item active" style="color:var(--text-muted)">{{ recipe.title[:40] }}...</li>
+      </ol>
+    </nav>
+
+    <span class="recipe-category-badge">{{ recipe.category | capitalize }}</span>
+    <h1 class="recipe-hero-title">{{ recipe.title }}</h1>
+
+    <div class="recipe-meta-row">
+      <div class="meta-chip">
+        <i class="bi bi-heart-fill" style="color:var(--accent)"></i>
+        <span>{{ recipe.loves }} orang menyukai ini</span>
+      </div>
+      {% if recipe.keywords %}
+      <div class="meta-chip">
+        <i class="bi bi-tags"></i>
+        <span>{{ recipe.keywords.replace('|', ' · ')[:60] }}</span>
+      </div>
+      {% endif %}
+      <button class="fav-btn {{ 'active' if is_favorite else '' }}" id="favBtn" data-recipe-id="{{ recipe.id }}">
+        <i class="bi {{ 'bi-heart-fill' if is_favorite else 'bi-heart' }}"></i>
+        <span class="fav-label">{{ 'Tersimpan' if is_favorite else 'Favorit' }}</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ── Main Content ── -->
+<div class="container py-5">
+  <div class="row g-4">
+
+    <!-- LEFT: Ingredients + Steps -->
+    <div class="col-lg-7">
+
+      <!-- Ingredients + Takaran Adjuster -->
+      <div class="section-card" id="ingredientCard">
+        <div class="section-card-title">
+          🛒 Bahan-bahan
+          <span class="ms-auto small fw-normal" style="color:var(--text-muted)">{{ ingredients | length }} bahan</span>
+        </div>
+
+        <!-- Porsi selector -->
+        <div class="takaran-bar" style="display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:12px;padding:12px 16px;margin-bottom:12px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:.9rem;color:var(--text-primary)">🍽️ Porsi:</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button id="servDec" class="serv-btn">−</button>
+            <span id="servVal" style="font-size:1.2rem;font-weight:800;color:var(--accent);min-width:28px;text-align:center">{{ flavor_profile.servings }}</span>
+            <button id="servInc" class="serv-btn">+</button>
+            <span style="font-size:.85rem;color:var(--text-muted)">orang</span>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <button id="applyTakaran" class="btn-apply-takaran">
+              <i class="bi bi-sliders"></i> Sesuaikan Takaran
+            </button>
+            <button id="resetTakaran" class="btn-reset-takaran" style="display:none">
+              <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
+            <a href="{{ url_for('main.rasa_from_recipe', recipe_id=recipe.id) }}" class="btn-atur-rasa">
+              <i class="bi bi-sliders2"></i> Preferensi Rasa
+            </a>
+          </div>
+        </div>
+
+        <!-- Flavor badges -->
+        <div id="flavorBadges" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+          {% if flavor_profile.spicy_level > 0 %}<span class="flavor-badge spicy">🌶️ Pedas lv.{{ flavor_profile.spicy_level }}</span>{% endif %}
+          {% if flavor_profile.sweet_level > 0 %}<span class="flavor-badge sweet">🍯 Manis lv.{{ flavor_profile.sweet_level }}</span>{% endif %}
+          {% if flavor_profile.savory_level > 0 %}<span class="flavor-badge savory">🧂 Gurih lv.{{ flavor_profile.savory_level }}</span>{% endif %}
+          {% if flavor_profile.sour_level > 0 %}<span class="flavor-badge sour">🍋 Asam lv.{{ flavor_profile.sour_level }}</span>{% endif %}
+          {% if flavor_profile.spicy_level == 0 and flavor_profile.sweet_level == 0 and flavor_profile.savory_level == 0 and flavor_profile.sour_level == 0 %}
+          <span style="font-size:.82rem;color:var(--text-muted)">Belum ada preferensi rasa. <a href="{{ url_for('main.rasa_from_recipe', recipe_id=recipe.id) }}" style="color:var(--accent);font-weight:700">⚙️ Atur Preferensi Rasa</a></span>
+          {% endif %}
+        </div>
+
+        <div id="ingredientList">
+          {% for ing in ingredients %}
+          <div class="ingredient-item" data-raw="{{ ing }}">{{ ing }}</div>
+          {% endfor %}
+        </div>
+        <p id="takaranNote" class="small mt-2" style="color:var(--text-muted);display:none">
+          ✦ = bahan yang disesuaikan dengan preferensi rasa kamu
+        </p>
+      </div>
+
+      <!-- Steps -->
+      <div class="section-card">
+        <div class="section-card-title">👩‍🍳 Cara Memasak</div>
+        {% for step in steps %}
+        <div class="step-item">
+          <div class="step-num">{{ loop.index }}</div>
+          <div class="step-text">{{ step }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Checklist + Notes + Rating + Export + Recommendations -->
+    <div class="col-lg-5">
+
+      <!-- Checklist -->
+      <div class="section-card">
+        <div class="section-card-title">✅ Bahan yang Perlu Dibeli</div>
+        <div id="checklistContainer" data-recipe-id="{{ recipe.id }}">
+          {% for item in checklists %}
+          <div class="checklist-item">
+            <input type="checkbox" class="checklist-cb" {% if item.checked %}checked{% endif %}>
+            <input type="text" class="checklist-input" value="{{ item.text }}" placeholder="Bahan...">
+            <button class="del-note-btn" title="Hapus"><i class="bi bi-x"></i></button>
+          </div>
+          {% endfor %}
+          {% if not checklists %}
+          <div class="checklist-item">
+            <input type="checkbox" class="checklist-cb">
+            <input type="text" class="checklist-input" placeholder="Tulis bahan yang kurang...">
+            <button class="del-note-btn" title="Hapus"><i class="bi bi-x"></i></button>
+          </div>
+          {% endif %}
+        </div>
+        <button class="add-check-btn" id="addCheckBtn">
+          <i class="bi bi-plus-lg"></i> Tambah bahan
+        </button>
+      </div>
+
+      <!-- Notes -->
+      <div class="section-card">
+        <div class="section-card-title">📝 Catatan Saya</div>
+        <div class="note-input-row">
+          <input type="text" id="noteInput" class="note-input" placeholder="Tulis catatan kamu..." />
+          <button class="btn-add-note" id="addNoteBtn"><i class="bi bi-plus"></i> Tambah</button>
+        </div>
+        <div id="notesContainer" data-recipe-id="{{ recipe.id }}">
+          {% for note in notes %}
+          <div class="note-item">
+            <span class="note-text">{{ note.text }}</span>
+            <button class="del-note-btn" data-note-idx="{{ loop.index0 }}" title="Hapus">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+          {% endfor %}
+          {% if not notes %}
+          <p class="small text-center" style="color:var(--text-muted); padding:12px 0">Belum ada catatan. Tambahkan sesuatu! ✨</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Rating bintang -->
+      <div class="section-card">
+        <div class="section-card-title">⭐ Nilai Resep Ini</div>
+        <div class="star-rating" id="starRating" data-recipe-id="{{ recipe.id }}" data-current="{{ user_rating }}">
+          {% for i in range(1, 6) %}
+          <button class="star-btn {{ 'active' if user_rating >= i else '' }}" data-star="{{ i }}">★</button>
+          {% endfor %}
+        </div>
+        <p class="small mt-2" style="color:var(--text-muted)" id="ratingLabel">
+          {% if user_rating %}Kamu memberi {{ user_rating }} bintang{% else %}Belum dinilai{% endif %}
+        </p>
+      </div>
+
+      <!-- Export PDF -->
+      <div class="section-card" style="text-align:center">
+        <a id="pdfLink" href="/api/export-pdf/{{ recipe.id }}?servings={{ flavor_profile.servings }}" class="btn-export-pdf">
+          <i class="bi bi-file-earmark-pdf-fill"></i> Unduh Resep (PDF)
+        </a>
+        <p class="small mt-2" style="color:var(--text-muted)">Format PDF siap cetak</p>
+      </div>
+
+      <!-- Recommendations -->
+      {% if recommendations %}
+      <div class="section-card">
+        <div class="section-card-title">💡 Resep Serupa</div>
+        <div class="row g-2 stagger">
+          {% for rec in recommendations %}
+          <div class="col-12">
+            <a href="{{ url_for('recipe.recipe', recipe_id=rec.id) }}" class="rec-card">
+              <div class="rec-card-title">{{ rec.title }}</div>
+              <div class="recipe-card-meta">
+                <span><i class="bi bi-tag"></i> {{ rec.category | capitalize }}</span>
+                <span class="loves-badge"><i class="bi bi-heart-fill"></i> {{ rec.loves }}</span>
+                <span><i class="bi bi-stars"></i> {{ rec.similarity }}%</span>
+              </div>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const RECIPE_ID = {{ recipe.id }};
+
+  // ── Takaran & Porsi ───────────────────────────────────────────────────────
+  let currentServings = {{ flavor_profile.servings }};
+  const originalIngredients = [...document.querySelectorAll('#ingredientList .ingredient-item')]
+    .map(el => el.dataset.raw || el.textContent.trim());
+
+  // Fetch ulang profil rasa dari server dan update badge (tanpa reload halaman)
+  async function loadFlavorBadges() {
+    try {
+      const res  = await fetch('/api/flavor-profile');
+      const prof = await res.json();
+      // Update servings
+      currentServings = prof.servings || currentServings;
+      const sv = document.getElementById('servVal');
+      if (sv) sv.textContent = currentServings;
+      // Update badge
+      const cont = document.getElementById('flavorBadges');
+      if (!cont) return;
+      const LABEL = { spicy:'🌶️ Pedas', sweet:'🍯 Manis', savory:'🧂 Gurih', sour:'🍋 Asam' };
+      const MAP   = { spicy:'spicy_level', sweet:'sweet_level', savory:'savory_level', sour:'sour_level' };
+      const badges = Object.entries(LABEL)
+        .filter(([k]) => (prof[MAP[k]] || 0) > 0)
+        .map(([k, lbl]) => `<span class="flavor-badge ${k}">${lbl} lv.${prof[MAP[k]]}</span>`)
+        .join('');
+      cont.innerHTML = badges ||
+        `<span style="font-size:.82rem;color:var(--text-muted)">
+           Belum ada preferensi rasa.
+           <a href="/rasa/${RECIPE_ID}" style="color:var(--accent);font-weight:700">⚙️ Atur Preferensi Rasa</a>
+         </span>`;
+    } catch(e) {}
+  }
+  // Panggil saat halaman pertama load agar badge selalu sinkron dengan DB
+  loadFlavorBadges();
+
+  document.getElementById('servDec')?.addEventListener('click', () => {
+    if (currentServings > 1) { currentServings--; document.getElementById('servVal').textContent = currentServings; updatePdfLink(); }
+  });
+  document.getElementById('servInc')?.addEventListener('click', () => {
+    if (currentServings < 20) { currentServings++; document.getElementById('servVal').textContent = currentServings; }
+    updatePdfLink();
+  });
+
+  function updatePdfLink() {
+    const link = document.getElementById('pdfLink');
+    if (link) link.href = `/api/export-pdf/${RECIPE_ID}?servings=${currentServings}`;
+  }
+
+  document.getElementById('applyTakaran')?.addEventListener('click', async () => {
+    const btn = document.getElementById('applyTakaran');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Menghitung...';
+    try {
+      const res  = await fetch(`/api/adjust-ingredients/${RECIPE_ID}?servings=${currentServings}`);
+      const data = await res.json();
+      if (data.ingredients) {
+        const list = document.getElementById('ingredientList');
+        list.innerHTML = '';
+        let modCount = 0;
+
+        data.ingredients.forEach(item => {
+          const div = document.createElement('div');
+          if (item.modified) {
+            // ── Bahan yang berubah: latar hijau + badge ✦ + keterangan ──
+            div.className = 'ingredient-item ing-modified';
+            const noteHtml = item.note
+              ? `<span class="ing-note">(${item.note})</span>`
+              : '';
+            const origHtml = (item.original && item.original !== item.adjusted)
+              ? `<span class="ing-original">${item.original}</span>`
+              : '';
+            div.innerHTML =
+              `<span class="ing-mod-badge">✦ Diubah</span>` +
+              `<strong>${item.adjusted}</strong> ${noteHtml}${origHtml}`;
+            modCount++;
+          } else {
+            div.className = 'ingredient-item';
+            div.textContent = item.adjusted;
+          }
+          div.dataset.raw = item.adjusted;
+          list.appendChild(div);
+        });
+
+        // Tampilkan keterangan dan tombol reset
+        const note = document.getElementById('takaranNote');
+        if (note) note.style.display = modCount > 0 ? 'block' : 'none';
+        document.getElementById('resetTakaran').style.display = 'inline-flex';
+
+        // Update flavor badges agar tetap tampil setelah adjust
+        await loadFlavorBadges();
+
+        // Simpan porsi saja (level rasa TIDAK dikirim agar tidak ter-reset)
+        // Server sudah di-fix untuk merge, bukan overwrite
+        await fetch('/api/flavor-profile', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ servings: currentServings })
+        });
+      }
+    } catch(e) { console.error(e); }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-sliders"></i> Sesuaikan Takaran';
+  });
+
+  document.getElementById('resetTakaran')?.addEventListener('click', () => {
+    const list = document.getElementById('ingredientList');
+    list.innerHTML = '';
+    originalIngredients.forEach(ing => {
+      const div = document.createElement('div');
+      div.className = 'ingredient-item';
+      div.dataset.raw = ing;
+      div.textContent = ing;
+      list.appendChild(div);
+    });
+    document.getElementById('takaranNote').style.display = 'none';
+    document.getElementById('resetTakaran').style.display = 'none';
+  });
+
+  // ── Star rating ──
+  const starContainer = document.getElementById('starRating');
+  if (starContainer) {
+    const rid   = starContainer.dataset.recipeId;
+    const stars = starContainer.querySelectorAll('.star-btn');
+    let current = parseInt(starContainer.dataset.current) || 0;
+
+    stars.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const s = parseInt(btn.dataset.star);
+        const res = await fetch('/api/rating', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({recipe_id: parseInt(rid), stars: s})
+        });
+        const data = await res.json();
+        if (data.success) {
+          current = s;
+          starContainer.dataset.current = s;
+          stars.forEach(b => b.classList.toggle('active', parseInt(b.dataset.star) <= s));
+          const lbl = document.getElementById('ratingLabel');
+          if (lbl) lbl.textContent = `Kamu memberi ${s} bintang ✨`;
+        }
+      });
+      btn.addEventListener('mouseenter', () => {
+        const s = parseInt(btn.dataset.star);
+        stars.forEach(b => b.style.color = parseInt(b.dataset.star) <= s ? '#f59e0b' : '');
+      });
+    });
+    starContainer.addEventListener('mouseleave', () => {
+      stars.forEach(b => { b.style.color = ''; b.classList.toggle('active', parseInt(b.dataset.star) <= current); });
+    });
+  }
+
+  // ── Highlight bahan dari pencarian terakhir ──
+  const lastSearch = sessionStorage.getItem('lastSearch') || '';
+  if (lastSearch) {
+    document.querySelectorAll('.ingredient-item').forEach(el => {
+      const raw = el.dataset.raw || el.textContent;
+      const terms = lastSearch.toLowerCase().split(/\s+/).filter(Boolean);
+      let html = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      terms.forEach(term => {
+        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+        html = html.replace(regex, '<mark class="bahan-highlight">$1</mark>');
+      });
+      el.innerHTML = `<span class="ing-icon">✿</span> ${html}`;
+    });
+  }
+});
+</script>
+{% endblock %}

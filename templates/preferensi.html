@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Preferensi – RasaNusa{% endblock %}
+
+{% block content %}
+<div class="recipe-hero page-enter">
+  <div class="container">
+    <h1 class="recipe-hero-title"><i class="bi bi-sliders" style="color:var(--accent)"></i> Preferensi & Filter Makanan</h1>
+    <p style="color:var(--text-secondary)">Atur preferensi agar rekomendasi makin personal untukmu 🌸</p>
+  </div>
+</div>
+
+<div class="container py-5" style="max-width:680px">
+
+  <!-- Filter Diet -->
+  <div class="section-card">
+    <div class="section-card-title">🥗 Diet & Pantangan</div>
+
+    <div class="pref-toggle-row" id="pref-vegetarian">
+      <div>
+        <div class="pref-label">🌿 Vegetarian</div>
+        <div class="pref-sub">Hanya tampilkan resep tanpa daging &amp; seafood</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="cb-vegetarian" {% if prefs.vegetarian %}checked{% endif %}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="pref-toggle-row" id="pref-no_seafood">
+      <div>
+        <div class="pref-label">🦐 Alergi Seafood</div>
+        <div class="pref-sub">Hilangkan resep berbahan udang, cumi, ikan, dll.</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="cb-no_seafood" {% if prefs.no_seafood %}checked{% endif %}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="pref-toggle-row" id="pref-no_gluten">
+      <div>
+        <div class="pref-label">🌾 Bebas Gluten</div>
+        <div class="pref-sub">Filter resep dengan tepung terigu, kecap, mie</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="cb-no_gluten" {% if prefs.no_gluten %}checked{% endif %}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="pref-toggle-row" id="pref-no_nuts">
+      <div>
+        <div class="pref-label">🥜 Alergi Kacang</div>
+        <div class="pref-sub">Hindari resep berkacang (kacang tanah, almond, dll.)</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="cb-no_nuts" {% if prefs.no_nuts %}checked{% endif %}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div style="margin-top:24px; text-align:center">
+      <button class="btn-save-pref" id="savePrefBtn">
+        <i class="bi bi-check-circle-fill"></i> Simpan Preferensi
+      </button>
+      <p id="saveMsg" class="small mt-2" style="color:var(--success); display:none">✅ Preferensi tersimpan! Hasil pencarian akan disesuaikan.</p>
+    </div>
+  </div>
+
+  <!-- Info preferensi rasa -->
+  <div class="section-card mt-4" style="border:2px solid var(--accent);background:linear-gradient(135deg,rgba(219,39,119,.04),transparent)">
+    <div class="section-card-title">🌶️ Preferensi Rasa</div>
+    <p style="color:var(--text-secondary);font-size:.92rem;line-height:1.7;margin-bottom:1.2rem">
+      Atur tingkat kepedasan, rasa manis, gurih, dan asam sesuai selera kamu.
+      Setting rasa akan mempengaruhi takaran bahan ketika kamu membuka halaman resep.
+    </p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.2rem">
+      {% if flavor.spicy_level > 0 %}<span class="flavor-badge spicy">🌶️ Pedas Lv.{{ flavor.spicy_level }}</span>{% endif %}
+      {% if flavor.sweet_level > 0 %}<span class="flavor-badge sweet">🍯 Manis Lv.{{ flavor.sweet_level }}</span>{% endif %}
+      {% if flavor.savory_level > 0 %}<span class="flavor-badge savory">🧂 Gurih Lv.{{ flavor.savory_level }}</span>{% endif %}
+      {% if flavor.sour_level > 0 %}<span class="flavor-badge sour">🍋 Asam Lv.{{ flavor.sour_level }}</span>{% endif %}
+      {% if flavor.spicy_level == 0 and flavor.sweet_level == 0 and flavor.savory_level == 0 and flavor.sour_level == 0 %}
+      <span style="color:var(--text-muted);font-size:.85rem;font-style:italic">Belum ada preferensi rasa yang diatur.</span>
+      {% endif %}
+    </div>
+    <a href="{{ url_for('main.rasa_setting') }}" class="btn-atur-rasa-link">
+      <i class="bi bi-sliders2"></i> Atur Preferensi Rasa
+    </a>
+  </div>
+
+  <!-- Cara kerja -->
+  <div class="section-card mt-4">
+    <div class="section-card-title">ℹ️ Cara Kerja Preferensi</div>
+    <p style="color:var(--text-secondary); font-size:0.92rem; line-height:1.8">
+      Sistem membaca bahan-bahan setiap resep dan menandai kategori seperti <em>seafood</em> atau <em>kacang</em>.
+      Ketika kamu melakukan pencarian, resep yang tidak sesuai preferensimu akan otomatis disaring.
+      Filter ini tidak menghapus data — kamu bisa menonaktifkannya kapan saja.
+    </p>
+  </div>
+
+</div>
+
+<style>
+.pref-toggle-row { display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--border); gap:16px; }
+.pref-toggle-row:last-of-type { border-bottom:none; }
+.pref-label { font-weight:700; color:var(--text-primary); margin-bottom:2px; }
+.pref-sub   { font-size:0.82rem; color:var(--text-muted); }
+.toggle-switch { position:relative; display:inline-block; width:52px; height:28px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; cursor:pointer; inset:0; background:var(--border); border-radius:28px; transition:0.3s; }
+.toggle-slider::before { content:''; position:absolute; width:22px; height:22px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.3s cubic-bezier(0.34,1.56,0.64,1); }
+input:checked + .toggle-slider { background:var(--accent); }
+input:checked + .toggle-slider::before { transform:translateX(24px); }
+.btn-save-pref { padding:12px 32px; background:linear-gradient(135deg,var(--accent-deep),var(--accent)); color:#fff; border:none; border-radius:50px; font-weight:700; font-size:0.95rem; cursor:pointer; transition:all 0.25s ease; }
+.btn-save-pref:hover { opacity:0.88; transform:scale(1.03); }
+.btn-atur-rasa-link { display:inline-flex; align-items:center; gap:8px; padding:11px 24px; background:var(--accent); color:#fff; border-radius:50px; font-weight:700; text-decoration:none; font-size:.92rem; transition:all .2s; }
+.btn-atur-rasa-link:hover { opacity:.88; transform:translateY(-1px); color:#fff; }
+.flavor-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 12px; border-radius:20px; font-size:.82rem; font-weight:700; }
+.flavor-badge.spicy  { background:#fee2e2; color:#dc2626; }
+.flavor-badge.sweet  { background:#fef3c7; color:#d97706; }
+.flavor-badge.savory { background:#f0fdf4; color:#059669; }
+.flavor-badge.sour   { background:#eff6ff; color:#2563eb; }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('savePrefBtn')?.addEventListener('click', async () => {
+  const prefs = {
+    vegetarian: document.getElementById('cb-vegetarian').checked,
+    no_seafood: document.getElementById('cb-no_seafood').checked,
+    no_gluten:  document.getElementById('cb-no_gluten').checked,
+    no_nuts:    document.getElementById('cb-no_nuts').checked,
+  };
+  const res = await fetch('/api/preferensi', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(prefs)
+  });
+  const data = await res.json();
+  if (data.success) {
+    const msg = document.getElementById('saveMsg');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  }
+});
+</script>
+{% endblock %}

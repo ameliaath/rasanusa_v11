@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}RasaNusa – Resep Masakan Indonesia{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ── -->
+<section class="hero-section page-enter">
+  <div class="container">
+    <h1 class="hero-title">
+      Temukan <span>Resep Masakan</span><br>Indonesia Favoritmu
+    </h1>
+    <p class="hero-subtitle">
+      Cari berdasarkan bahan yang ada di dapur — kami carikan resep terbaiknya ✨
+    </p>
+
+    <!-- Search box -->
+    <div class="search-wrapper">
+      <input
+        type="text"
+        id="searchBox"
+        class="search-box"
+        placeholder="Cari bahan... contoh: ayam santan bawang"
+        autocomplete="off"
+        autofocus
+      />
+      <button class="search-btn" id="searchBtn">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+
+    <!-- Hint tags -->
+    <div class="search-hints">
+      {% set hints = ['ayam', 'tempe', 'tahu', 'santan', 'bawang putih', 'cabai', 'telur', 'ikan', 'udang', 'jahe'] %}
+      {% for h in hints %}
+      <span class="hint-tag" data-ingredient="{{ h }}">{{ h }}</span>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── Search Results (hidden until search) ── -->
+<section class="search-results-panel container" id="searchResultsPanel">
+  <div class="sort-bar">
+    <span class="fw-bold" style="color:var(--text-secondary)"><i class="bi bi-sort-down"></i> Urutkan:</span>
+    <button class="sort-btn active" data-sort="">Paling Relevan</button>
+    <button class="sort-btn" data-sort="loves_desc">❤️ Paling Banyak Suka</button>
+    <button class="sort-btn" data-sort="loves_asc">🤍 Paling Sedikit Suka</button>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+  <div id="searchResultsList"></div>
+</section>
+
+<!-- ── Category Grid ── -->
+<section class="container pb-5" id="categorySection">
+  <h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill text-accent"></i> Jelajahi Kategori</h2>
+  <div class="row g-4 stagger">
+    {% for cat in categories %}
+    <div class="col-6 col-md-4 col-lg-3">
+      <a href="{{ url_for('main.category', cat_name=cat.name) }}" class="cat-card">
+        <div style="overflow:hidden">
+          <img
+            src="{{ cat.image }}"
+            alt="{{ cat.label }}"
+            class="cat-card-img"
+            loading="lazy"
+          />
+        </div>
+        <div class="cat-card-body">
+          <p class="cat-card-name">{{ cat.label }}</p>
+          <p class="small mb-0" style="color:var(--text-muted)">{{ cat.sample_title[:30] }}...</p>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% endblock %}

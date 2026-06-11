@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Preferensi Rasa – RasaNusa{% endblock %}
+
+{% block extra_head %}
+<style>
+.rasa-hero {
+  background: linear-gradient(135deg, var(--accent-deep), var(--accent));
+  padding: 2.5rem 0 2rem;
+  color: #fff;
+}
+.rasa-hero h1 { font-family:'Playfair Display',serif; font-size:1.9rem; margin:0 0 .3rem; }
+.rasa-hero p  { opacity:.85; margin:0; font-size:.95rem; }
+.rasa-back {
+  display:inline-flex; align-items:center; gap:6px; color:rgba(255,255,255,.85);
+  text-decoration:none; font-size:.88rem; margin-bottom:1rem; transition:.2s;
+  background:rgba(255,255,255,.15); padding:5px 12px; border-radius:20px;
+}
+.rasa-back:hover { color:#fff; background:rgba(255,255,255,.25); }
+
+.rasa-card {
+  background:var(--surface); border-radius:1.4rem; padding:2rem;
+  box-shadow:var(--shadow); margin-bottom:1.5rem;
+}
+.rasa-card-title {
+  font-weight:800; font-size:1.05rem; color:var(--text-primary);
+  margin-bottom:1.4rem; display:flex; align-items:center; gap:8px;
+}
+
+/* ── Slider row ── */
+.fl-row {
+  display:flex; align-items:center; gap:16px; padding:16px 0;
+  border-bottom:1px solid var(--border);
+}
+.fl-row:last-of-type { border-bottom:none; }
+.fl-icon  { font-size:1.8rem; width:44px; text-align:center; flex-shrink:0; }
+.fl-info  { flex:1; min-width:0; }
+.fl-name  { font-weight:700; color:var(--text-primary); font-size:.97rem; }
+.fl-desc  { font-size:.78rem; color:var(--text-muted); margin-top:3px; line-height:1.4; }
+.fl-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; width:160px; }
+.fl-slider {
+  width:100%; accent-color:var(--accent); cursor:pointer; height:5px;
+}
+.fl-val-row { display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between; }
+.fl-val-badge {
+  min-width:52px; text-align:center; font-weight:800; font-size:.85rem;
+  padding:3px 10px; border-radius:20px; background:var(--surface-2);
+  color:var(--text-muted); border:1.5px solid var(--border); transition:.2s;
+}
+.fl-val-badge.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+.level-dots { display:flex; gap:4px; }
+.level-dot  { width:9px; height:9px; border-radius:50%; background:var(--border); transition:.25s; }
+.level-dot.on { background:var(--accent); }
+
+/* ── Info box ── */
+.rasa-info {
+  background:var(--surface-2); border-radius:10px; padding:12px 16px;
+  font-size:.82rem; color:var(--text-muted); margin-bottom:1.4rem;
+  border-left:3px solid var(--accent);
+}
+.rasa-info strong { color:var(--text-primary); }
+
+/* ── Tombol simpan ── */
+.btn-simpan-rasa {
+  width:100%; padding:15px; background:linear-gradient(135deg,var(--accent-deep),var(--accent));
+  color:#fff; border:none; border-radius:14px; font-weight:800; font-size:1rem;
+  cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-simpan-rasa:hover { opacity:.9; transform:translateY(-1px); }
+.btn-simpan-rasa:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+.save-toast {
+  text-align:center; padding:10px 16px; border-radius:10px; font-weight:600;
+  font-size:.9rem; margin-top:12px; display:none;
+}
+.save-toast.ok  { background:#d1fae5; color:#065f46; display:block; }
+.save-toast.err { background:#fee2e2; color:#dc2626; display:block; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="rasa-hero">
+  <div class="container">
+    <a href="{{ back_url }}" class="rasa-back">
+      <i class="bi bi-arrow-left-circle-fill"></i>
+      {% if from_recipe %}Kembali ke resep{% else %}Kembali ke Preferensi{% endif %}
+    </a>
+    <h1>🌶️ Preferensi Rasa</h1>
+    <p>Atur intensitas rasa — tersimpan permanen untuk semua resep</p>
+  </div>
+</div>
+
+<div class="container py-4" style="max-width:620px">
+
+  <div class="rasa-info">
+    <strong>Cara kerja:</strong> Level 0 = tidak berpengaruh.
+    Level 1–5 menambah takaran bahan rasa tersebut sebesar <strong>+10% per level</strong>
+    (maks. +50% di level 5). Pengaturan ini berlaku untuk semua resep dan disimpan secara permanen.
+  </div>
+
+  <div class="rasa-card">
+    <div class="rasa-card-title">
+      <i class="bi bi-sliders" style="color:var(--accent)"></i> Intensitas Rasa
+    </div>
+
+    {% set sliders = [
+      ('spicy',  '🌶️', 'Pedas',  'Cabai, lada, sambal, merica, rawit',       flavor.spicy_level),
+      ('sweet',  '🍯', 'Manis',  'Kecap manis, gula, madu, sirup',            flavor.sweet_level),
+      ('savory', '🧂', 'Gurih',  'Garam, kaldu, penyedap, royco, saus tiram', flavor.savory_level),
+      ('sour',   '🍋', 'Asam',   'Jeruk nipis, asam jawa, cuka, tomat',       flavor.sour_level),
+    ] %}
+
+    {% for key, icon, label, desc, val in sliders %}
+    <div class="fl-row">
+      <div class="fl-icon">{{ icon }}</div>
+      <div class="fl-info">
+        <div class="fl-name">{{ label }}</div>
+        <div class="fl-desc">{{ desc }}</div>
+      </div>
+      <div class="fl-right">
+        <div class="fl-val-row">
+          <div class="level-dots" id="dots-{{ key }}">
+            {% for i in range(5) %}
+            <div class="level-dot {% if val > i %}on{% endif %}"></div>
+            {% endfor %}
+          </div>
+          <span class="fl-val-badge {% if val > 0 %}on{% endif %}" id="badge-{{ key }}">
+            Lv.{{ val }}
+          </span>
+        </div>
+        <input type="range" class="fl-slider" id="sl-{{ key }}"
+               min="0" max="5" step="1" value="{{ val }}">
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+
+  <button class="btn-simpan-rasa" id="simpanRasaBtn">
+    <i class="bi bi-check-circle-fill"></i> Simpan Preferensi Rasa
+  </button>
+  <div class="save-toast" id="saveToast"></div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const BACK_URL = {{ back_url | tojson }};
+
+// ── Update slider visual realtime ─────────────────────────────────────────────
+['spicy','sweet','savory','sour'].forEach(key => {
+  const sl    = document.getElementById(`sl-${key}`);
+  const badge = document.getElementById(`badge-${key}`);
+  const dots  = document.querySelectorAll(`#dots-${key} .level-dot`);
+  if (!sl) return;
+
+  function sync(v) {
+    const n = parseInt(v);
+    badge.textContent = `Lv.${n}`;
+    badge.classList.toggle('on', n > 0);
+    dots.forEach((d, i) => d.classList.toggle('on', i < n));
+  }
+  sync(sl.value);
+  sl.addEventListener('input', () => sync(sl.value));
+});
+
+// ── Simpan ────────────────────────────────────────────────────────────────────
+document.getElementById('simpanRasaBtn').addEventListener('click', async () => {
+  const btn   = document.getElementById('simpanRasaBtn');
+  const toast = document.getElementById('saveToast');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Menyimpan...';
+
+  const profile = {
+    spicy_level  : parseInt(document.getElementById('sl-spicy').value),
+    sweet_level  : parseInt(document.getElementById('sl-sweet').value),
+    savory_level : parseInt(document.getElementById('sl-savory').value),
+    sour_level   : parseInt(document.getElementById('sl-sour').value),
+  };
+
+  try {
+    const res  = await fetch('/api/flavor-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile),
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast.className = 'save-toast ok';
+      toast.innerHTML = '✅ Preferensi rasa berhasil disimpan! Mengalihkan...';
+      setTimeout(() => { window.location.href = BACK_URL; }, 900);
+    } else {
+      throw new Error();
+    }
+  } catch {
+    toast.className = 'save-toast err';
+    toast.textContent = '❌ Gagal menyimpan. Coba lagi.';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Simpan Preferensi Rasa';
+  }
+});
+</script>
+{% endblock %}

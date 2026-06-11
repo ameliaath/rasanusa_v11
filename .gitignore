@@ -1,0 +1,6 @@
+# Mengabaikan folder cache Python agar tidak mengotori GitHub
+__pycache__/
+*.pyc
+
+# Mengabaikan file database lokal agar data demo kamu aman di laptop
+data/rasanusa.db

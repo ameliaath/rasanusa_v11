@@ -1,0 +1,115 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'Tambah' if mode=='add' else 'Edit' }} Resep – Admin RasaNusa{% endblock %}
+{% block page_title %}{{ 'Tambah Resep Baru' if mode=='add' else 'Edit Resep' }}{% endblock %}
+{% block extra_head %}
+<style>
+.form-card { background:var(--surface); border:1px solid var(--border); border-radius:1.4rem;
+             padding:2rem; box-shadow:var(--shadow); }
+.form-label-adm { font-weight:700; color:var(--text-primary); margin-bottom:5px; font-size:.92rem; }
+.form-hint { font-size:.78rem; color:var(--text-muted); margin-top:3px; }
+.form-ctrl {
+  width:100%; padding:10px 14px; border:1.5px solid var(--border);
+  border-radius:10px; background:var(--surface-2); color:var(--text-primary);
+  font-size:.93rem; font-family:inherit; transition:border-color .2s; outline:none;
+}
+.form-ctrl:focus { border-color:var(--accent); }
+.form-ctrl-ta { resize:vertical; min-height:160px; line-height:1.6; }
+.btn-submit { padding:13px 36px; background:linear-gradient(135deg,var(--accent-deep),var(--accent));
+              color:#fff; border:none; border-radius:50px; font-weight:800; font-size:1rem;
+              cursor:pointer; transition:.2s; }
+.btn-submit:hover { opacity:.88; transform:translateY(-1px); }
+.btn-cancel { padding:13px 28px; background:var(--surface-2); color:var(--text-muted);
+              border:1.5px solid var(--border); border-radius:50px; font-weight:700;
+              font-size:.95rem; text-decoration:none; transition:.2s; }
+.btn-cancel:hover { background:var(--border); color:var(--text-primary); }
+.sep-info { background:var(--surface-2); border-left:3px solid var(--accent);
+            border-radius:0 8px 8px 0; padding:8px 14px; font-size:.8rem;
+            color:var(--text-muted); margin-bottom:4px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:780px">
+  <div class="mb-3" style="font-size:.85rem;color:var(--text-muted)">
+    <a href="{{ url_for('admin.recipes') }}" style="color:var(--accent);text-decoration:none"><i class="bi bi-arrow-left"></i> Daftar Resep</a>
+    <span class="mx-1">/</span>
+    <span>{{ 'Tambah Resep' if mode=='add' else 'Edit Resep' }}</span>
+  </div>
+
+  <div class="form-card">
+    <form method="POST">
+
+      <!-- Judul -->
+      <div class="mb-4">
+        <label class="form-label-adm">Judul Resep <span style="color:var(--accent)">*</span></label>
+        <input type="text" name="title" class="form-ctrl"
+               value="{{ data.get('title','') }}" placeholder="Contoh: Ayam Bakar Madu" required>
+      </div>
+
+      <!-- Kategori -->
+      <div class="mb-4">
+        <label class="form-label-adm">Kategori <span style="color:var(--accent)">*</span></label>
+        <div class="d-flex gap-2 flex-wrap">
+          <select name="category" class="form-ctrl" style="flex:1;min-width:160px">
+            <option value="">-- Pilih kategori --</option>
+            {% for c in categories %}
+            <option value="{{ c }}" {% if data.get('category','') == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+          <input type="text" name="new_category" class="form-ctrl" style="flex:1;min-width:160px"
+                 value="{{ data.get('new_category','') }}"
+                 placeholder="Atau ketik kategori baru...">
+        </div>
+        <p class="form-hint">Pilih dari dropdown ATAU ketik kategori baru (prioritas jika keduanya diisi).</p>
+      </div>
+
+      <!-- Bahan -->
+      <div class="mb-4">
+        <label class="form-label-adm">Bahan-bahan <span style="color:var(--accent)">*</span></label>
+        <div class="sep-info">Tulis satu bahan per baris. Contoh:<br>3 sdm kecap manis<br>2 butir telur</div>
+        <textarea name="ingredients" class="form-ctrl form-ctrl-ta"
+                  placeholder="3 sdm kecap manis&#10;2 butir telur&#10;..." required>{{ data.get('ingredients','') }}</textarea>
+        <p class="form-hint">Setiap baris akan disimpan sebagai satu bahan (dipisah dengan tanda --).</p>
+      </div>
+
+      <!-- Langkah -->
+      <div class="mb-4">
+        <label class="form-label-adm">Langkah Memasak <span style="color:var(--accent)">*</span></label>
+        <div class="sep-info">Tulis satu langkah per baris. Contoh:<br>Panaskan minyak di wajan.<br>Tumis bawang hingga harum.</div>
+        <textarea name="steps" class="form-ctrl form-ctrl-ta" style="min-height:200px"
+                  placeholder="Panaskan minyak di wajan.&#10;Tumis bawang hingga harum.&#10;..." required>{{ data.get('steps','') }}</textarea>
+      </div>
+
+      <!-- Info tambahan (opsional) -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label-adm">❤️ Loves</label>
+          <input type="number" name="loves" class="form-ctrl"
+                 value="{{ data.get('loves', 0) }}" min="0" placeholder="0">
+        </div>
+        <div class="col-md-8">
+          <label class="form-label-adm">URL Sumber (opsional)</label>
+          <input type="text" name="url" class="form-ctrl"
+                 value="{{ data.get('url','') }}" placeholder="https://...">
+        </div>
+      </div>
+
+      <div class="mb-5">
+        <label class="form-label-adm">Keywords (opsional)</label>
+        <input type="text" name="keywords" class="form-ctrl"
+               value="{{ data.get('keywords','') }}"
+               placeholder="Contoh: ayam|bakar|madu">
+        <p class="form-hint">Pisahkan dengan tanda | (pipe).</p>
+      </div>
+
+      <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a href="{{ url_for('admin.recipes') }}" class="btn-cancel">Batal</a>
+        <button type="submit" class="btn-submit">
+          <i class="bi bi-{{ 'plus-lg' if mode=='add' else 'check-lg' }}"></i>
+          {{ 'Tambah Resep' if mode=='add' else 'Simpan Perubahan' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

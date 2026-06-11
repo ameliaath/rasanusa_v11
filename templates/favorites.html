@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Resep Favorit – RasaNusa{% endblock %}
+
+{% block content %}
+
+<div class="recipe-hero page-enter">
+  <div class="container">
+    <h1 class="recipe-hero-title">
+      <i class="bi bi-heart-fill" style="color:var(--accent)"></i> Resep Favorit Saya
+    </h1>
+    <p style="color:var(--text-secondary)">{{ recipes | length }} resep tersimpan</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  {% if recipes %}
+  <!-- Sort bar -->
+  <div class="sort-bar mb-4">
+    <span class="fw-bold" style="color:var(--text-secondary)"><i class="bi bi-sort-down"></i> Urutkan:</span>
+    <a href="?" class="sort-btn {{ 'active' if sort_by == '' }}">Terbaru Disimpan</a>
+    <a href="?sort=loves_desc" class="sort-btn {{ 'active' if sort_by == 'loves_desc' }}">❤️ Paling Banyak Suka</a>
+    <a href="?sort=loves_asc" class="sort-btn {{ 'active' if sort_by == 'loves_asc' }}">🤍 Paling Sedikit Suka</a>
+  </div>
+
+  <div class="stagger">
+    {% for r in recipes %}
+    <a href="{{ url_for('recipe.recipe', recipe_id=r.id) }}" class="recipe-card">
+      <div class="recipe-card-title">{{ r.title }}</div>
+      <div class="recipe-card-meta">
+        <span><i class="bi bi-tag"></i> {{ r.category | capitalize }}</span>
+        <span class="loves-badge"><i class="bi bi-heart-fill"></i> {{ r.loves }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <span class="emoji">💔</span>
+    <p>Belum ada resep favorit.</p>
+    <p>Klik <strong><i class="bi bi-heart"></i> Favorit</strong> pada halaman resep untuk menyimpannya!</p>
+    <a href="{{ url_for('main.index') }}" style="display:inline-block; margin-top:16px; padding: 10px 24px; background: linear-gradient(135deg, var(--accent-deep), var(--accent)); color:#fff; border-radius:50px; text-decoration:none; font-weight:700">
+      Cari Resep Sekarang
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
